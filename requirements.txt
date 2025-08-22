@@ -1,3 +1,5 @@
-gradio>=4.0.0
-python-dotenv>=1.0.0
-openai>=1.0.0
+fastapi[standard]
+uvicorn[standard]
+python-dotenv[standard]
+openai[standard]
+pydantic[standard]
