@@ -4,12 +4,10 @@ import gradio as gr
 from dotenv import load_dotenv
 from openai import OpenAI
 
-# --- env / config bootstrap ---
-load_dotenv()  # load variables from .env if present
+load_dotenv()
 
-# Support alternate env var naming the user mentioned (OPEN_AI_API_KEY) by mapping it.
 if not os.getenv("OPENAI_API_KEY") and os.getenv("OPEN_AI_API_KEY"):
-    os.environ["OPENAI_API_KEY"] = os.environ["OPEN_AI_API_KEY"]  # normalize for SDK
+    os.environ["OPENAI_API_KEY"] = os.environ["OPEN_AI_API_KEY"] 
 
 if not os.getenv("OPENAI_API_KEY"):
     raise RuntimeError(
@@ -18,14 +16,14 @@ if not os.getenv("OPENAI_API_KEY"):
 
 _raw_model = os.getenv("OPENAI_MODEL")
 if not _raw_model or not _raw_model.strip():
-    MODEL = "gpt-4.1-mini"  # default when env unset or blank
+    MODEL = "gpt-4.1-mini" 
 else:
     MODEL = _raw_model.strip()
 
 logging.info("Using model: %s", MODEL)
 SYSTEM = "You add tags about the product that is sent to you as an image, adding things about the type of product, the color and any other relevant attributes as tags."
 
-client = OpenAI()  # uses OPENAI_API_KEY from env
+client = OpenAI()
 
 def _img_to_data_url(path: str) -> str:
     mime = mimetypes.guess_type(path)[0] or "image/png"
@@ -33,9 +31,6 @@ def _img_to_data_url(path: str) -> str:
         b64 = base64.b64encode(f.read()).decode("utf-8")
     return f"data:{mime};base64,{b64}"
 
-# Gradio ChatInterface with multimodal input passes:
-#   message: {"text": str, "files": [<paths>]}
-#   history: list[{"role": ..., "content": ...}]
 def chat_fn(message, history):
     """Gradio chat handler.
 
@@ -49,7 +44,6 @@ def chat_fn(message, history):
     user_text = (message or {}).get("text") or ""
     files = (message or {}).get("files") or []
 
-    # Build multimodal user content for Chat Completions API
     content = []
     if user_text.strip():
         content.append({"type": "text", "text": user_text})
@@ -60,18 +54,15 @@ def chat_fn(message, history):
                     "type": "image_url",
                     "image_url": {"url": _img_to_data_url(p)}
                 })
-            except Exception as e:  # continue even if one image fails
+            except Exception as e:
                 logging.warning("Failed to encode image %s: %s", p, e)
 
-    # If somehow content is empty (no text, no valid images), send an empty text so API isn't upset
     if not content:
         content = [{"type": "text", "text": ""}]
 
-    # Enforce structured JSON output via json_schema
-    # Type checker workaround: SDK accepts list of content parts; annotate/cast.
     messages = [
         {"role": "system", "content": SYSTEM},
-        {"role": "user", "content": content},  # type: ignore[arg-type]
+        {"role": "user", "content": content},
     ]
 
     resp = client.chat.completions.create(
@@ -94,33 +85,29 @@ def chat_fn(message, history):
         },
     )
 
-    # Extract text content from first choice
     raw_output = None
     try:
-        choice_msg = resp.choices[0].message  # type: ignore[index]
+        choice_msg = resp.choices[0].message
         content_field = getattr(choice_msg, "content", None)
-        if isinstance(content_field, list):  # sometimes SDK may return list parts
+        if isinstance(content_field, list):  
             parts = []
             for part in content_field:
-                # Accept various part shapes {"type": "text", "text": ...}
                 if isinstance(part, dict):
                     if part.get("type") in ("text", "output_text"):
                         parts.append(part.get("text", ""))
                     elif "text" in part:
-                        parts.append(part["text"])  # fallback
+                        parts.append(part["text"])
             raw_output = "".join(parts).strip()
         else:
             raw_output = (content_field or "").strip()
     except Exception as e:
         logging.error("Failed extracting model output: %s", e)
-        raw_output = "{}"  # fallback
+        raw_output = "{}"
 
-    # Parse JSON with error resilience
     try:
         data = json.loads(raw_output)
     except Exception as e:
         logging.warning("JSON parse failed, attempting heuristic cleanup: %s", e)
-        # Heuristic: attempt to isolate first/last braces
         try:
             start = raw_output.find('{')
             end = raw_output.rfind('}')
@@ -129,10 +116,8 @@ def chat_fn(message, history):
             else:
                 raise ValueError("No JSON object found")
         except Exception:
-            # Final fallback minimal schema-compliant object
             data = {"tags": []}
 
-    # Ensure required keys exist (model should supply, but be safe)
     if "tags" not in data or not isinstance(data.get("tags"), list):
         data["tags"] = []
 
@@ -143,7 +128,7 @@ demo = gr.ChatInterface(
     type="messages",
     title="JSON-first Vision Chatbot",
     description="Attach images and get strictly-typed JSON back.",
-    multimodal=True,  # enables text + file uploads in the input box
+    multimodal=True,
     textbox=gr.MultimodalTextbox(file_types=["image"], label="Message or drop images")
 )
 
