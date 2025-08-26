@@ -1,0 +1,82 @@
+name: Deploy to VPS
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Connect and Deploy
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+            host: ${{ secrets.VPS_HOST }}
+            username: ${{ secrets.VPS_USERNAME }}
+            key: ${{ secrets.VPS_SSH_KEY }}
+            port: ${{ secrets.VPS_PORT }}
+            script: |
+                set -ex  # Enable debugging and exit on error
+
+                # Debugging info
+                echo "Current user: $(whoami)"
+                echo "Working directory: $(pwd)"
+                echo "Contents of /home/hndev/repos:"
+                ls -la /home/hndev/repos
+
+                # Navigate to project directory
+                if ! cd /home/hndev/repos/Tagging-AI; then
+                    echo "❌ Error: Could not access /home/hndev/repos/Tagging-AI"
+                    echo "Creating directory if it doesn't exist..."
+                    mkdir -p /home/hndev/repos/Tagging-AI
+                    cd /home/hndev/repos/Tagging-AI
+                fi
+
+                echo "🔄 Pulling latest 'main' branch..."
+                git fetch origin main
+                git reset --hard origin/main
+                git clean -fd  # Remove untracked files
+
+                echo "🔨 Building Docker container..."
+                if ! docker compose build --no-cache taggingai; then
+                    echo "❌ Build failed, please check the logs."
+                    exit 1
+                fi
+
+                echo "🛑 Stopping current container..."
+                docker compose stop taggingai || true
+
+                echo "🧼 Removing old container..."
+                docker compose rm -f taggingai || true
+
+                echo "🧹 Cleaning up Docker resources..."
+                docker container prune -f
+                docker image prune -af || true
+
+                echo "🚀 Starting new container..."
+                docker compose up -d taggingai
+
+                echo "✅ Deployment complete!"
+                echo "🔄 Checking container status..."
+                docker compose ps
+
+
+
+
+
+
+
+
+
+
+
+Message Erick Reyes
+
+
+
+
+
+
+
+
+
