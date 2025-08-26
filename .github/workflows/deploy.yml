@@ -59,24 +59,3 @@ jobs:
                 echo "✅ Deployment complete!"
                 echo "🔄 Checking container status..."
                 docker compose ps
-
-
-
-
-
-
-
-
-
-
-
-Message Erick Reyes
-
-
-
-
-
-
-
-
-
