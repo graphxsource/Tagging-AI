@@ -3,6 +3,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    container_name: taggingai
     ports:
       - "8002:80"
     volumes:
