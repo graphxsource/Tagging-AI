@@ -48,6 +48,19 @@ logging.info("Using Azure OpenAI deployment: %s (api_version=%s)", MODEL, AZURE_
 
 app = FastAPI(title="Image Tagger API", version="1.0.0")
 
+
+allowed_origins = [
+"*"
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=allowed_origins,    # Specific URLs only
+    allow_credentials=True,
+    allow_methods=["GET", "POST"],    # Only allow needed methods
+    allow_headers=["*"],
+)
+
 class TagResponse(BaseModel):
     tags: List[str]
 
