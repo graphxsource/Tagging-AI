@@ -1,43 +1,66 @@
-# JSON-first Vision Chatbot
+# Tagging-AI
 
-A small Gradio demo that sends text + image inputs to OpenAI's Chat Completions API and enforces a strict JSON schema response.
+Tagging-AI is a simple API endpoint that uses AI to automatically tag images. It is designed for easy integration and testing, leveraging modern AI models (OpenAI or Azure OpenAI) to generate descriptive tags for images you provide.
+
+## Features
+
+- REST API endpoint for image tagging
+- Supports both OpenAI and Azure OpenAI backends
+- Easy configuration via `.env` file
+- Docker and Uvicorn support for local development and testing
 
 ## Setup
 
-1. Create a `.env` file (already included) and add your API key:
+### 1. Clone the repository
 
-```
-OPENAI_API_KEY=sk-your-key-here
-# Optional alternate variable name supported:
-# OPEN_AI_API_KEY=sk-your-key-here
-
-# (Optional) override model
-# OPENAI_MODEL=gpt-4.1-mini
+```powershell
+git clone <repo-url>
+cd Tagging-AI
 ```
 
-2. Install dependencies (Windows PowerShell example):
+### 2. Install dependencies
 
-```
-python -m venv .venv; .\.venv\Scripts\Activate.ps1
+```powershell
 pip install -r requirements.txt
 ```
 
-3. Run the app:
+### 3. Configure environment variables
+
+Copy the `.env.example` file to `.env` and fill in the required values:
+
+```powershell
+copy .env.example .env
+```
+
+Edit `.env` and set your API keys and model/deployment info as needed:
 
 ```
-python app.py
+#AZURE ENVS
+AZURE_OPENAI_API_KEY= ""
+AZURE_OPENAI_ENDPOINT= ""
+AZURE_DEPLOYMENT= ""
+AZURE_API_VER= ""
 ```
 
-Open the local Gradio URL printed in the console.
+## Running the API with Uvicorn
 
-## Notes
-- Supports images (png, jpg, jpeg, webp, gif).
-- Falls back gracefully if the model returns malformed JSON.
-- The JSON schema currently requires only `tags` (array of strings). Adjust in `app.py` inside `response_format`.
+For local testing, run the API using Uvicorn:
 
-## Troubleshooting
-- If you see a runtime error about missing OPENAI_API_KEY, ensure your `.env` is present and you've reloaded the shell.
-- To print debug info, set an env var before running:
+```powershell
+uvicorn app.main:app --reload
 ```
-$env:LOGLEVEL="DEBUG"; python app.py
+
+- The API will be available at `http://127.0.0.1:8000/`
+- Use tools like Postman or curl to test the image tagging endpoint.
+
+## Docker Support
+
+You can also run the service using Docker:
+
+```powershell
+docker-compose up --build
 ```
+
+## License
+
+MIT
