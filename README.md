@@ -5,7 +5,7 @@ Tagging-AI is a simple API endpoint that uses AI to automatically tag images. It
 ## Features
 
 - REST API endpoint for image tagging
-- Supports both OpenAI and Azure OpenAI backends
+- Supports Azure OpenAI backends
 - Easy configuration via `.env` file
 - Docker and Uvicorn support for local development and testing
 
