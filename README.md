@@ -32,14 +32,12 @@ Copy the `.env.example` file to `.env` and fill in the required values:
 copy .env.example .env
 ```
 
-Edit `.env` and set your API keys and model/deployment info as needed:
+Edit `.env` and set your API keys and model info as needed:
 
 ```
-#AZURE ENVS
-AZURE_OPENAI_API_KEY= ""
-AZURE_OPENAI_ENDPOINT= ""
-AZURE_DEPLOYMENT= ""
-AZURE_API_VER= ""
+OPENROUTER_URL= ""
+TAGGING_API_KEY= ""
+TAGGING_MODEL= ""
 ```
 
 ## Running the API with Uvicorn

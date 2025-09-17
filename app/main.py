@@ -6,34 +6,30 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, HttpUrl
 
-from openai import AzureOpenAI
+from openai import OpenAI
 
 from fastapi import Body
 
 load_dotenv()
 logging.basicConfig(level=logging.INFO)
 
+OPENROUTER_URL = os.getenv("OPENROUTER_URL")
+TAGGING_API_KEY = os.getenv("TAGGING_API_KEY")
+MODEL = os.getenv("TAGGING_MODEL")
+
+if not (OPENROUTER_URL and TAGGING_API_KEY and MODEL):
+    raise RuntimeError("Set OPENROUTER_URL, TAGGING_API_KEY, TAGGING_MODEL.")
+
+client = OpenAI(
+    api_key=TAGGING_API_KEY,
+    base_url=OPENROUTER_URL,
+)
 
 SYSTEM = (
     "You add tags about the product that is sent to you as an image, "
     "adding things about the type of product, the color and any other relevant attributes as tags."
 )
 
-AZURE_ENDPOINT   = os.getenv("AZURE_OPENAI_ENDPOINT")
-AZURE_API_KEY    = os.getenv("AZURE_OPENAI_API_KEY")
-AZURE_DEPLOYMENT = os.getenv("AZURE_DEPLOYMENT")
-AZURE_API_VER    = os.getenv("AZURE_API_VER")
-
-if not (AZURE_ENDPOINT and AZURE_API_KEY and AZURE_DEPLOYMENT):
-    raise RuntimeError("Set AZURE_ENDPOINT, AZURE_API_KEY, AZURE_DEPLOYMENT.")
-
-client = AzureOpenAI(
-    azure_endpoint=AZURE_ENDPOINT,
-    api_key=AZURE_API_KEY,
-    api_version=AZURE_API_VER,
-)
-MODEL = AZURE_DEPLOYMENT
-logging.info("Using Azure OpenAI deployment: %s (api_version=%s)", MODEL, AZURE_API_VER)
 app = FastAPI(title="Image Tagger API", version="1.0.0")
 
 allowed_origins = [
@@ -62,22 +58,25 @@ def _call_model_with_content(content) -> TagResponse:
     ]
 
     resp = client.chat.completions.create(
-        model=MODEL, 
-        messages=messages,
-        response_format={
-            "type": "json_schema",
-            "json_schema": {
-                "name": "chatbot_reply",
-                "strict": True,
-                "schema": {
-                    "type": "object",
-                    "properties": {"tags": {"type": "array", "items": {"type": "string"}}},
-                    "required": ["tags"],
-                    "additionalProperties": False,
-                },
+    model=MODEL, # type: ignore
+    messages=messages,
+    response_format={
+        "type": "json_schema",
+        "json_schema": {
+            "name": "chatbot_reply",
+            "strict": True,
+            "schema": {
+                "type": "object",
+                "properties": {"tags": {"type": "array", "items": {"type": "string"}}},
+                "required": ["tags"],
+                "additionalProperties": False,
             },
+
         },
-    )
+
+    },
+
+)
 
     raw_output = ""
     try:
