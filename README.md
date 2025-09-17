@@ -5,7 +5,7 @@ Tagging-AI is a simple API endpoint that uses AI to automatically tag images. It
 ## Features
 
 - REST API endpoint for image tagging
-- Supports Azure OpenAI backends
+- Supports OpenRouter endpoint for image tagging.
 - Easy configuration via `.env` file
 - Docker and Uvicorn support for local development and testing
 
@@ -45,7 +45,7 @@ TAGGING_MODEL= ""
 For local testing, run the API using Uvicorn:
 
 ```powershell
-uvicorn app.main:app --reload
+python -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
 - The API will be available at `http://127.0.0.1:8000/`
